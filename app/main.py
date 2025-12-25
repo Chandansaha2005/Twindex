@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from app.gemini_client import run_twindex
 from app.schemas import SimulationRequest, SimulationResponse
 import logging
-
+ 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
