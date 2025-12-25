@@ -8,19 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 def run_twindex(user_input: str) -> str:
-    """
-    Call Gemini AI to generate health risk trajectory simulations.
-    
-    Args:
-        user_input: The user's prompt/query
-        
-    Returns:
-        The AI-generated response text
-        
-    Raises:
-        RuntimeError: If GEMINI_API_KEY is not found in environment variables
-        ValueError: If API call fails
-    """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not found in environment variables")
