@@ -6,7 +6,6 @@ from app.gemini_client import run_twindex
 from app.schemas import SimulationRequest, SimulationResponse
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,18 +17,6 @@ app = FastAPI(
 
 @app.post("/simulate", response_model=SimulationResponse)
 async def simulate(request: SimulationRequest):
-    """
-    Generate a health risk trajectory simulation based on user input.
-    
-    Args:
-        request: SimulationRequest containing a 'prompt' field
-        
-    Returns:
-        SimulationResponse with the AI-generated 'result' field
-        
-    Raises:
-        HTTPException: If there's an error processing the request
-    """
     try:
         logger.info(f"Processing simulation request: {request.prompt[:50]}...")
         output = run_twindex(request.prompt)
