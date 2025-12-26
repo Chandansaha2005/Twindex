@@ -1,163 +1,324 @@
 /**
- * Twindex Frontend Script
- * Handles API communication and UI interactions
+ * Twindex Frontend - Health Trajectory Simulator
+ * Handles form input, prompt construction, and API communication
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
-const SIMULATE_ENDPOINT = `${API_BASE_URL}/simulate`;
+// ============================================================================
+// DOM ELEMENTS
+// ============================================================================
+const form = document.getElementById('simulationForm');
+const errorMessage = document.getElementById('errorMessage');
+const outputSection = document.getElementById('outputSection');
+const loadingState = document.getElementById('loadingState');
+const resultsContainer = document.getElementById('resultsContainer');
+const btnSpinner = document.getElementById('btnSpinner');
 
-// DOM Elements
-const promptInput = document.getElementById('prompt-input');
-const simulateBtn = document.getElementById('simulate-btn');
-const spinner = document.getElementById('spinner');
-const outputSection = document.getElementById('output-section');
-const outputContainer = document.getElementById('output-container');
-const errorSection = document.getElementById('error-section');
-const errorMessage = document.getElementById('error-message');
-const emptyState = document.getElementById('empty-state');
+// Input fields
+const heightInput = document.getElementById('height');
+const weightInput = document.getElementById('weight');
+const bmiInput = document.getElementById('bmi');
 
-/**
- * Initialize event listeners
- */
-function init() {
-    simulateBtn.addEventListener('click', runSimulation);
-    promptInput.addEventListener('keydown', (e) => {
-        // Allow Cmd/Ctrl + Enter to submit
-        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-            runSimulation();
-        }
-    });
-}
+// ============================================================================
+// BMI AUTO-CALCULATION
+// ============================================================================
+function calculateBMI() {
+    const height = parseFloat(heightInput.value);
+    const weight = parseFloat(weightInput.value);
 
-/**
- * Run simulation - main function
- */
-async function runSimulation() {
-    const prompt = promptInput.value.trim();
-
-    // Validation
-    if (!prompt) {
-        showError('Please enter your health information before running a simulation.');
-        return;
-    }
-
-    if (prompt.length < 10) {
-        showError('Please provide more detailed information (at least 10 characters).');
-        return;
-    }
-
-    // Clear previous states
-    hideError();
-    hideOutput();
-    hideEmptyState();
-
-    // Show loading state
-    setLoading(true);
-
-    try {
-        const response = await fetchSimulation(prompt);
-        displayOutput(response.result || response.output || response.text || response.message || 'No response received');
-    } catch (error) {
-        showError(error.message);
-    } finally {
-        setLoading(false);
+    if (height > 0 && weight > 0) {
+        const heightInMeters = height / 100;
+        const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+        bmiInput.value = bmi;
     }
 }
 
-/**
- * Fetch simulation from API
- * @param {string} prompt - User input
- * @returns {Promise<Object>} API response
- */
-async function fetchSimulation(prompt) {
-    const payload = {
-        prompt: prompt
+heightInput.addEventListener('change', calculateBMI);
+weightInput.addEventListener('change', calculateBMI);
+
+// ============================================================================
+// PROMPT CONSTRUCTION
+// ============================================================================
+function constructPrompt() {
+    // Collect form data
+    const data = {
+        name: document.getElementById('name').value,
+        age: document.getElementById('age').value,
+        gender: document.getElementById('gender').value,
+        bmi: document.getElementById('bmi').value,
+        familyHistory: document.getElementById('familyHistory').value,
+        fastingGlucose: document.getElementById('fastingGlucose').value,
+        hbA1c: document.getElementById('hbA1c').value,
+        sleep: document.getElementById('sleep').value,
+        dailySteps: document.getElementById('dailySteps').value,
+        sugarIntake: document.getElementById('sugarIntake').value,
+        stressLevel: document.getElementById('stressLevel').value,
+        targetSleep: document.getElementById('targetSleep').value,
+        targetSteps: document.getElementById('targetSteps').value,
+        targetSugarIntake: document.getElementById('targetSugarIntake').value,
+        duration: document.getElementById('duration').value,
     };
 
+    // Construct the prompt in the specified format
+    const prompt = `
+PATIENT_PROFILE:
+Name: ${data.name}
+Age: ${data.age}
+Gender: ${data.gender}
+BMI: ${data.bmi}
+Family_History: ${data.familyHistory}
+
+BASELINE_LAB_DATA:
+Fasting_Glucose: ${data.fastingGlucose} mg/dL
+HbA1c: ${data.hbA1c}%
+
+CURRENT_LIFESTYLE:
+Sleep: ${data.sleep} hours/night
+Daily_Steps: ${data.dailySteps}
+Sugar_Intake: ${data.sugarIntake}
+Stress_Level: ${data.stressLevel}
+
+SCENARIOS_TO_SIMULATE:
+A) Current lifestyle continues unchanged
+B) Sleep increased to ${data.targetSleep} hours, sugar intake reduced to ${data.targetSugarIntake}, daily steps increased to ${data.targetSteps}
+
+SIMULATION_TIMEFRAME:
+${data.duration} months
+
+TASKS:
+1. Simulate the future health risk trajectory for each scenario
+2. Estimate relative change in Type 2 Diabetes risk as a percentage
+3. Identify key lifestyle factors driving risk
+4. Provide preventive, lifestyle-based suggestions
+5. Explain reasoning using clear cause → effect logic
+
+OUTPUT_FORMAT:
+- Risk_Comparison_Table (with scenarios, risk levels, HbA1c trend, glucose trend)
+- Key_Risk_Drivers (bullet list of lifestyle factors)
+- Estimated_Risk_Change_Percentage (e.g., "-28% relative risk reduction")
+- Cause_Effect_Explanation (explain how sleep, sugar, activity, stress affect diabetes risk)
+- Simple_Summary (Explain like I am 12 - very simple language, friendly tone, no medical jargon)
+`.trim();
+
+    return prompt;
+}
+
+// ============================================================================
+// FORM VALIDATION
+// ============================================================================
+function validateForm() {
+    const requiredFields = [
+        'name', 'age', 'gender', 'familyHistory',
+        'height', 'weight', 'fastingGlucose', 'hbA1c',
+        'sleep', 'dailySteps', 'sugarIntake', 'stressLevel',
+        'targetSleep', 'targetSteps', 'targetSugarIntake', 'duration'
+    ];
+
+    for (const fieldId of requiredFields) {
+        const field = document.getElementById(fieldId);
+        if (!field.value || field.value.trim() === '') {
+            showError(`Please fill in: ${field.previousElementSibling?.textContent || fieldId}`);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hideError() {
+    errorMessage.classList.add('hidden');
+}
+
+// ============================================================================
+// API COMMUNICATION
+// ============================================================================
+async function submitSimulation(event) {
+    event.preventDefault();
+    hideError();
+
+    // Validate
+    if (!validateForm()) {
+        return;
+    }
+
+    // Show loading state
+    outputSection.classList.remove('hidden');
+    loadingState.classList.remove('hidden');
+    resultsContainer.classList.add('hidden');
+    btnSpinner.style.display = 'inline-block';
+
+    // Scroll to output
+    outputSection.scrollIntoView({ behavior: 'smooth' });
+
     try {
-        const response = await fetch(SIMULATE_ENDPOINT, {
+        // Construct prompt
+        const prompt = constructPrompt();
+        console.log('Constructed prompt:\n', prompt);
+
+        // Prepare request payload
+        const payload = {
+            prompt: prompt
+        };
+
+        // Send to backend
+        const response = await fetch('http://127.0.0.1:8000/simulate', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const errorDetail = errorData.detail || errorData.message || errorData.error;
-            const errorMsg = Array.isArray(errorDetail) ? errorDetail[0]?.msg : errorDetail;
-            throw new Error(errorMsg || `API Error: ${response.status} ${response.statusText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Backend error');
         }
 
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        if (error instanceof TypeError) {
-            throw new Error(
-                'Cannot connect to backend. Make sure the server is running at http://127.0.0.1:8000'
-            );
+        const result = await response.json();
+        console.log('Backend response:', result);
+
+        if (!result || !result.result) {
+            throw new Error('Invalid response format: missing result field');
         }
-        throw error;
+
+        // Hide loading, show results
+        loadingState.classList.add('hidden');
+        resultsContainer.classList.remove('hidden');
+        btnSpinner.style.display = 'none';
+
+        // Parse and display results
+        displayResults(result.result);
+    } catch (error) {
+        console.error('Error:', error);
+        btnSpinner.style.display = 'none';
+        loadingState.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        showError(`Error: ${error.message}`);
     }
 }
 
-/**
- * Display simulation output
- * @param {string} output - The response text from API
- */
-function displayOutput(output) {
-    // Format the output with better readability
-    const formattedOutput = formatOutput(output);
-    outputContainer.innerHTML = formattedOutput;
-    showOutput();
+// ============================================================================
+// RESULT PARSING & DISPLAY
+// ============================================================================
+function displayResults(rawOutput) {
+    // Store raw output for debugging
+    document.getElementById('fullResponse').textContent = rawOutput;
+
+    // Parse output sections
+    const sections = parseOutput(rawOutput);
+
+    // Populate result cards
+    displayRiskTable(sections.riskComparison);
+    displayRiskDrivers(sections.riskDrivers);
+    displayRiskChange(sections.riskChange);
+    displayCauseEffect(sections.causeEffect);
+    displaySimpleSummary(sections.simpleSummary);
 }
 
-/**
- * Format output text for better display
- * @param {string} text - Raw output text
- * @returns {string} HTML formatted text
- */
-function formatOutput(text) {
-    // Escape HTML to prevent injection
-    let escaped = escapeHtml(text);
+function parseOutput(output) {
+    // Extract sections from the raw AI output
+    const sections = {
+        riskComparison: extractSection(output, 'Risk_Comparison_Table|Risk Comparison'),
+        riskDrivers: extractSection(output, 'Key_Risk_Drivers|Key Risk Drivers'),
+        riskChange: extractSection(output, 'Estimated_Risk_Change|Estimated Risk Change'),
+        causeEffect: extractSection(output, 'Cause.*Effect|Cause.*Effect'),
+        simpleSummary: extractSection(output, 'Simple_Summary|Simple Summary'),
+    };
 
-    // Convert markdown-like formatting
-    // Bold: **text** or __text__
-    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
-
-    // Italic: *text* or _text_
-    escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    escaped = escaped.replace(/_(.*?)_/g, '<em>$1</em>');
-
-    // Headers: # Header
-    escaped = escaped.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-    escaped = escaped.replace(/^## (.*?)$/gm, '<h2 style="margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.3rem;">$1</h2>');
-    escaped = escaped.replace(/^# (.*?)$/gm, '<h2>$1</h2>');
-
-    // Lists: - item or * item
-    escaped = escaped.replace(/^\s*[-*] (.*?)$/gm, '<li>$1</li>');
-    escaped = escaped.replace(/(<li>.*<\/li>)/s, '<ul style="margin-left: 1.5rem; margin-bottom: 1rem;">$1</ul>');
-
-    // Numbered lists: 1. item
-    escaped = escaped.replace(/^\s*\d+\. (.*?)$/gm, '<li>$1</li>');
-
-    // Line breaks
-    escaped = escaped.replace(/\n\n/g, '</p><p>');
-    escaped = `<p>${escaped}</p>`;
-
-    // Clean up empty paragraphs
-    escaped = escaped.replace(/<p><\/p>/g, '');
-
-    return escaped;
+    return sections;
 }
 
-/**
- * Escape HTML special characters
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
+function extractSection(text, sectionPattern) {
+    if (!text || typeof text !== 'string') return 'No data available';
+    const regex = new RegExp(`${sectionPattern}[:\\n]*([\\s\\S]*?)(?=(^[A-Z_-]|$))`, 'im');
+    const match = text.match(regex);
+    return match && match[1] ? match[1].trim() : 'No data available';
+}
+
+function displayRiskTable(content) {
+    const tableDiv = document.getElementById('riskTable');
+    tableDiv.innerHTML = formatMarkdown(content);
+}
+
+function displayRiskDrivers(content) {
+    const driversDiv = document.getElementById('riskDrivers');
+    driversDiv.innerHTML = formatMarkdown(content);
+}
+
+function displayRiskChange(content) {
+    const changeDiv = document.getElementById('riskChange');
+    changeDiv.innerHTML = formatMarkdown(content);
+}
+
+function displayCauseEffect(content) {
+    const causeDiv = document.getElementById('causeEffect');
+    causeDiv.innerHTML = formatMarkdown(content);
+}
+
+function displaySimpleSummary(content) {
+    const summaryDiv = document.getElementById('simpleSummary');
+    summaryDiv.innerHTML = formatMarkdown(content);
+}
+
+// ============================================================================
+// MARKDOWN-STYLE FORMATTING
+// ============================================================================
+function formatMarkdown(text) {
+    if (!text || typeof text !== 'string') return '<p>No data available</p>';
+
+    let html = text;
+
+    // Escape HTML
+    html = escapeHtml(html);
+
+    // Convert markdown tables (pipe-separated)
+    html = html.replace(/\|(.+)\|/g, (match) => {
+        const rows = match.split('\n').filter(r => r.includes('|'));
+        if (rows.length === 0) return match;
+
+        let table = '<table>';
+        rows.forEach((row, index) => {
+            const cells = row.split('|').slice(1, -1).map(c => c.trim());
+            const tag = index === 0 ? 'th' : 'td';
+            table += `<tr>${cells.map(c => `<${tag}>${c}</${tag}>`).join('')}</tr>`;
+        });
+        table += '</table>';
+        return table;
+    });
+
+    // Convert headings
+    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+
+    // Convert bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // Convert italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // Convert lists
+    html = html.replace(/^\s*[-•*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*?<\/li>)/s, (match) => `<ul>${match}</ul>`);
+
+    // Convert line breaks to paragraphs
+    html = html.split('\n\n').map(p => {
+        if (p.includes('<h') || p.includes('<table') || p.includes('<ul') || p.includes('<li')) {
+            return p;
+        }
+        return p.trim() ? `<p>${p.trim()}</p>` : '';
+    }).join('');
+
+    return html;
+}
+
 function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -166,84 +327,29 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, (m) => map[m]);
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-/**
- * Show error message
- * @param {string} message - Error message to display
- */
-function showError(message) {
-    errorMessage.textContent = message;
-    errorSection.style.display = 'block';
-    outputSection.style.display = 'none';
-    emptyState.style.display = 'none';
+// ============================================================================
+// RESET FUNCTIONALITY
+// ============================================================================
+function resetSimulation() {
+    outputSection.classList.add('hidden');
+    form.scrollIntoView({ behavior: 'smooth' });
 }
 
-/**
- * Hide error message
- */
-function hideError() {
-    errorSection.style.display = 'none';
-}
-
-/**
- * Show output section
- */
-function showOutput() {
-    outputSection.style.display = 'block';
-    emptyState.style.display = 'none';
-    errorSection.style.display = 'none';
-}
-
-/**
- * Hide output section
- */
-function hideOutput() {
-    outputSection.style.display = 'none';
-}
-
-/**
- * Hide empty state
- */
-function hideEmptyState() {
-    emptyState.style.display = 'none';
-}
-
-/**
- * Set loading state
- * @param {boolean} isLoading - Loading state
- */
-function setLoading(isLoading) {
-    simulateBtn.disabled = isLoading;
-    promptInput.disabled = isLoading;
-
-    if (isLoading) {
-        spinner.classList.add('active');
-        simulateBtn.textContent = '';
-        const textSpan = document.createElement('span');
-        textSpan.className = 'button-text';
-        textSpan.textContent = 'Processing...';
-        simulateBtn.appendChild(textSpan);
-        simulateBtn.appendChild(spinner);
-    } else {
-        spinner.classList.remove('active');
-        simulateBtn.innerHTML = '<span class="button-text">Run Simulation</span><span class="spinner" id="spinner"></span>';
-    }
-}
-
-/**
- * Reset form and UI
- */
-function resetForm() {
-    promptInput.value = '';
-    promptInput.disabled = false;
-    hideOutput();
+form.addEventListener('reset', () => {
+    bmiInput.value = '';
     hideError();
-    emptyState.style.display = 'block';
-    setLoading(false);
-    promptInput.focus();
-}
+});
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', init);
+// ============================================================================
+// FORM SUBMISSION
+// ============================================================================
+form.addEventListener('submit', submitSimulation);
+
+// ============================================================================
+// INITIALIZE
+// ============================================================================
+console.log('Twindex Frontend Ready');
+
