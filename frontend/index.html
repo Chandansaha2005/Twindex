@@ -6,6 +6,7 @@
     <title>Twindex - AI Health Trajectory Simulator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* ================================================================
            RESET & VARIABLES
@@ -36,6 +37,19 @@
             --radius: 12px;
         }
 
+        :root.dark-mode {
+            --text-primary: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --bg-base: #1f2937;
+            --bg-surface: #111827;
+            --primary-light: #1e3a8a;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -45,6 +59,11 @@
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             color: var(--text-primary);
             line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        :root.dark-mode body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
 
         /* ================================================================
@@ -59,6 +78,26 @@
         .header {
             margin-bottom: 3rem;
             text-align: center;
+            position: relative;
+        }
+
+        .dark-mode-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--bg-base);
+            box-shadow: var(--shadow-md);
         }
 
         .header h1 {
@@ -967,6 +1006,192 @@
         }
 
         /* ================================================================
+           FOLLOW-UP CHAT SECTION
+           ================================================================ */
+        .followup-chat-section {
+            margin-top: 3rem;
+            display: none;
+        }
+
+        .followup-chat-section.visible {
+            display: block;
+        }
+
+        .followup-chat-container {
+            background: var(--bg-surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .followup-chat-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 0.75rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .chat-message.user {
+            justify-content: flex-end;
+        }
+
+        .chat-message-content {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .chat-message.user .chat-message-content {
+            background: var(--primary);
+            color: white;
+            border-radius: 8px 0 8px 8px;
+        }
+
+        .chat-message.ai .chat-message-content {
+            background: var(--bg-base);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0 8px 8px 8px;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            background: var(--bg-surface);
+            transition: var(--transition);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .chat-input:disabled {
+            background: var(--bg-base);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-send-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .chat-send-btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+
+        .chat-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .chat-ai-content h1,
+        .chat-ai-content h2,
+        .chat-ai-content h3,
+        .chat-ai-content h4,
+        .chat-ai-content h5,
+        .chat-ai-content h6 {
+            font-weight: 600;
+            margin: 0.75rem 0 0.5rem 0;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .chat-ai-content h1 { font-size: 1.1rem; }
+        .chat-ai-content h2 { font-size: 1rem; }
+        .chat-ai-content h3 { font-size: 0.95rem; }
+
+        .chat-ai-content p {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+
+        .chat-ai-content ul,
+        .chat-ai-content ol {
+            margin: 0.5rem 0 0.5rem 1.25rem;
+            padding: 0;
+        }
+
+        .chat-ai-content ul li,
+        .chat-ai-content ol li {
+            margin: 0.3rem 0;
+            line-height: 1.6;
+        }
+
+        .chat-ai-content strong {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chat-ai-content em {
+            font-style: italic;
+        }
+
+        .chat-ai-content code {
+            background: var(--bg-base);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .chat-ai-content blockquote {
+            border-left: 3px solid var(--primary);
+            padding: 0.5rem 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--bg-base);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ================================================================
            RESPONSIVE
            ================================================================ */
         @media (max-width: 768px) {
@@ -999,6 +1224,15 @@
             .output-card-debug {
                 grid-column: 1;
             }
+
+            .chat-message-content {
+                max-width: 90%;
+            }
+            }
+
+            .chat-message-content {
+                max-width: 90%;
+            }
         }
     </style>
 </head>
@@ -1006,6 +1240,7 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
+            <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">🌙</button>
             <h1>Twindex</h1>
             <p>AI-Powered Health Trajectory Simulator</p>
         </header>
@@ -1258,7 +1493,10 @@
             <section class="output-section hidden" id="outputSection">
                 <div class="output-header">
                     <h2>Simulation Results</h2>
-                    <button type="button" class="btn btn-tertiary" onclick="resetSimulation()">↻ New Simulation</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn btn-tertiary" onclick="exportResultsToPDF()">📥 Export PDF</button>
+                        <button type="button" class="btn btn-tertiary" onclick="resetSimulation()">↻ New Simulation</button>
+                    </div>
                 </div>
 
                 <!-- Loading State -->
@@ -1305,6 +1543,26 @@
                             <summary>📋 Full AI Response</summary>
                             <pre id="fullResponse"></pre>
                         </details>
+                    </div>
+                </div>
+
+                <!-- Follow-up Chat Section -->
+                <div class="followup-chat-section" id="followupChatSection">
+                    <div class="followup-chat-container">
+                        <h3 class="followup-chat-title">💬 Ask Questions About This Report</h3>
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-group">
+                            <input 
+                                type="text" 
+                                class="chat-input" 
+                                id="chatInput" 
+                                placeholder="Ask a question about your health report..."
+                                disabled
+                            />
+                            <button class="chat-send-btn" id="chatSendBtn" onclick="sendFollowupQuestion()" disabled>
+                                Ask
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>

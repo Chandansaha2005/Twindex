@@ -341,8 +341,18 @@ function displayResults(rawOutput) {
         fullResponseEl.textContent = rawOutput;
     }
 
+    // Store report content for follow-up chat context
+    storedReportContent = rawOutput;
+
     // Render the full markdown output
     renderMarkdownCard(rawOutput);
+
+    // Show follow-up chat section
+    const followupSection = document.getElementById('followupChatSection');
+    followupSection.classList.add('visible');
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.innerHTML = '';
+    initializeFollowupChat();
 }
 
 function renderMarkdownCard(markdownContent) {
@@ -424,13 +434,185 @@ form.addEventListener('reset', () => {
 form.addEventListener('submit', submitSimulation);
 
 // ============================================================================
+// DARK MODE FUNCTIONALITY
+// ============================================================================
+function initializeDarkMode() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const savedMode = localStorage.getItem('darkMode');
+
+    if (savedMode === 'true') {
+        document.documentElement.classList.add('dark-mode');
+        darkModeToggle.textContent = '☀️';
+    }
+
+    darkModeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark-mode');
+        const isDarkMode = document.documentElement.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkMode);
+        darkModeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+    });
+}
+
+// ============================================================================
+// PDF EXPORT FUNCTIONALITY
+// ============================================================================
+function exportResultsToPDF() {
+    const resultsContainer = document.getElementById('resultsContainer');
+    
+    if (!resultsContainer || resultsContainer.classList.contains('hidden')) {
+        alert('No results to export. Please run a simulation first.');
+        return;
+    }
+
+    const element = resultsContainer;
+    const opt = {
+        margin: 10,
+        filename: 'AI_Health_Simulation_Report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+}
+
+// ============================================================================
+// FOLLOW-UP CHAT FUNCTIONALITY
+// ============================================================================
+let storedReportContent = '';
+
+function initializeFollowupChat() {
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+
+    chatInput.disabled = false;
+    chatSendBtn.disabled = false;
+    chatInput.focus();
+}
+
+function addChatMessage(text, isUser) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'}`;
+    
+    if (isUser) {
+        messageDiv.innerHTML = `<div class="chat-message-content">${escapeHtml(text)}</div>`;
+    } else {
+        // Parse markdown for AI responses
+        messageDiv.innerHTML = `<div class="chat-message-content chat-ai-content">${marked.parse(text)}</div>`;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function addThinkingIndicator() {
+    const chatMessages = document.getElementById('chatMessages');
+    const thinkingDiv = document.createElement('div');
+    thinkingDiv.className = 'chat-message ai';
+    thinkingDiv.id = 'thinkingIndicator';
+    thinkingDiv.innerHTML = `<div class="chat-message-content"><span class="chat-thinking">Thinking...</span></div>`;
+    chatMessages.appendChild(thinkingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeThinkingIndicator() {
+    const thinkingDiv = document.getElementById('thinkingIndicator');
+    if (thinkingDiv) {
+        thinkingDiv.remove();
+    }
+}
+
+async function sendFollowupQuestion() {
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    const question = chatInput.value.trim();
+
+    if (!question) {
+        return;
+    }
+
+    // Disable input while processing
+    chatInput.disabled = true;
+    chatSendBtn.disabled = true;
+
+    // Add user message
+    addChatMessage(question, true);
+    chatInput.value = '';
+
+    // Show thinking indicator
+    addThinkingIndicator();
+
+    try {
+        // Construct follow-up prompt with context
+        const followupPrompt = `You are continuing a discussion based strictly on the following generated health simulation report. Do not repeat the report. Answer only the user's question with clear cause-effect reasoning.
+
+PREVIOUS_REPORT:
+${storedReportContent}
+
+FOLLOW-UP_QUESTION:
+${question}
+
+Answer concisely and focus directly on what the user asked. Use simple language.`;
+
+        const payload = {
+            prompt: followupPrompt
+        };
+
+        const response = await fetch('http://127.0.0.1:8000/simulate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Backend error');
+        }
+
+        const result = await response.json();
+
+        if (!result || !result.result) {
+            throw new Error('Invalid response format');
+        }
+
+        // Remove thinking indicator and add AI response
+        removeThinkingIndicator();
+        addChatMessage(result.result, false);
+
+    } catch (error) {
+        removeThinkingIndicator();
+        addChatMessage(`Error: ${error.message}`, false);
+    } finally {
+        // Re-enable input
+        chatInput.disabled = false;
+        chatSendBtn.disabled = false;
+        chatInput.focus();
+    }
+}
+
+// ============================================================================
 // INITIALIZE
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    initializeDarkMode();
     initializeSliderListeners();
     updateBMI();
     updateGlucoseStatus();
     updateHbA1cStatus();
+    
+    // Add enter key listener for chat input
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !chatInput.disabled) {
+                sendFollowupQuestion();
+            }
+        });
+    }
+    
     console.log('Twindex Frontend Ready');
 });
 
