@@ -1,0 +1,92 @@
+[
+  {
+    "disease_id": "T2D",
+    "disease_name": "Type 2 Diabetes",
+    "category": "Metabolic",
+    "affected_age_range": "35–65",
+    "key_risk_factors": [
+      "High BMI",
+      "Sedentary Lifestyle",
+      "High Sugar Intake",
+      "Family History"
+    ],
+    "global_prevalence_percent": 10.5,
+    "relevance_rules": {
+      "bmi_threshold": 25,
+      "min_age": 30,
+      "lifestyle_flags": ["low_steps", "high_sugar"]
+    },
+    "insight_template": "Type 2 Diabetes affects ~{prevalence}% of adults worldwide. Those with BMI above {threshold} and low physical activity show significantly higher risk of insulin resistance. Managing lifestyle factors like sugar intake and daily movement is key to prevention."
+  },
+  {
+    "disease_id": "CVD",
+    "disease_name": "Cardiovascular Disease",
+    "category": "Cardio-metabolic",
+    "affected_age_range": "40–70",
+    "key_risk_factors": [
+      "Chronic Stress",
+      "Poor Sleep",
+      "Low Physical Activity",
+      "High BMI"
+    ],
+    "global_prevalence_percent": 32.0,
+    "relevance_rules": {
+      "min_age": 40,
+      "lifestyle_flags": ["high_stress", "low_sleep", "low_steps"]
+    },
+    "insight_template": "Cardiovascular Disease contributes to ~{prevalence}% of global mortality. Chronic stress, poor sleep, and sedentary habits significantly increase risk across all age groups. Regular movement and stress management are protective factors."
+  },
+  {
+    "disease_id": "HTN",
+    "disease_name": "Hypertension",
+    "category": "Cardiovascular",
+    "affected_age_range": "35–70",
+    "key_risk_factors": [
+      "High Stress",
+      "Sedentary Lifestyle",
+      "High BMI",
+      "Poor Sleep"
+    ],
+    "global_prevalence_percent": 26.4,
+    "relevance_rules": {
+      "bmi_threshold": 27,
+      "min_age": 35,
+      "lifestyle_flags": ["high_stress", "low_steps"]
+    },
+    "insight_template": "Hypertension affects ~{prevalence}% of the global adult population. Stress management, increased physical activity, and adequate sleep are among the most effective lifestyle interventions for blood pressure control."
+  },
+  {
+    "disease_id": "OB",
+    "disease_name": "Obesity-Related Conditions",
+    "category": "Metabolic",
+    "affected_age_range": "25–65",
+    "key_risk_factors": [
+      "High BMI",
+      "Sedentary Lifestyle",
+      "High Sugar Intake"
+    ],
+    "global_prevalence_percent": 16.0,
+    "relevance_rules": {
+      "bmi_threshold": 30,
+      "lifestyle_flags": ["low_steps"]
+    },
+    "insight_template": "Obesity affects ~{prevalence}% of adults globally and increases risk for multiple chronic conditions. Increasing daily physical activity and reducing caloric intake are foundational prevention strategies."
+  },
+  {
+    "disease_id": "SLEEP",
+    "disease_name": "Sleep-Related Disorders",
+    "category": "Neurological",
+    "affected_age_range": "30–70",
+    "key_risk_factors": [
+      "Poor Sleep Quality",
+      "High Stress",
+      "Sedentary Lifestyle"
+    ],
+    "global_prevalence_percent": 15.0,
+    "relevance_rules": {
+      "min_age": 30,
+      "lifestyle_flags": ["low_sleep", "high_stress"]
+    },
+    "insight_template": "Sleep disorders affect ~{prevalence}% of the global population. Poor sleep is linked to metabolic dysfunction, increased cardiovascular risk, and cognitive decline. Sleep hygiene and stress reduction are key interventions."
+  }
+]

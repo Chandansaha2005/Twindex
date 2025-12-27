@@ -1186,6 +1186,147 @@
             background: var(--bg-base);
         }
 
+        /* ================================================================
+           GLOBAL HEALTH CONTEXT SECTION
+           ================================================================ */
+        .global-context-section {
+            margin-top: 3rem;
+            display: none;
+        }
+
+        .global-context-section.visible {
+            display: block;
+        }
+
+        .global-context-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .global-context-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .global-context-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .disease-context-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .disease-card {
+            background: var(--bg-surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .disease-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .disease-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .disease-card-icon {
+            font-size: 1.8rem;
+        }
+
+        .disease-card-title {
+            flex: 1;
+        }
+
+        .disease-card-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .disease-card-category {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .disease-prevalence {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .disease-prevalence-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .disease-prevalence-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .disease-insight {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .disease-risk-factors {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .disease-risk-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.5rem;
+        }
+
+        .disease-risk-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid var(--primary);
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -1559,6 +1700,18 @@
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Global Health Context Section -->
+                <div class="global-context-section" id="globalContextSection">
+                    <div class="global-context-header">
+                        <h2>🌍 Global Health Context</h2>
+                        <p class="global-context-subtitle">
+                            Based on your profile and lifestyle inputs, your risk patterns align with globally prevalent conditions. 
+                            Understanding these patterns helps contextualize your personalized recommendations.
+                        </p>
+                    </div>
+                    <div class="disease-context-cards" id="diseaseContextCards"></div>
                 </div>
             </section>
         </main>

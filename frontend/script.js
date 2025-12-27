@@ -353,6 +353,9 @@ function displayResults(rawOutput) {
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
     initializeFollowupChat();
+
+    // Render global health context
+    renderGlobalHealthContext();
 }
 
 function renderMarkdownCard(markdownContent) {
@@ -480,6 +483,7 @@ function exportResultsToPDF() {
 // FOLLOW-UP CHAT FUNCTIONALITY
 // ============================================================================
 let storedReportContent = '';
+let loadedDiseaseContext = [];
 
 function initializeFollowupChat() {
     const chatInput = document.getElementById('chatInput');
@@ -593,11 +597,112 @@ Answer concisely and focus directly on what the user asked. Use simple language.
     }
 }
 
-// ============================================================================
-// INITIALIZE
-// ============================================================================
+async function loadDiseaseContext() {
+    try {
+        const response = await fetch('disease_context.json');
+        if (!response.ok) throw new Error('Failed to load disease context');
+        loadedDiseaseContext = await response.json();
+    } catch (error) {
+        console.error('Error loading disease context:', error);
+        loadedDiseaseContext = [];
+    }
+}
+
+function evaluateRelevanceRules(rules, userInputs) {
+    if (!rules) return true;
+
+    // Check min age (hard threshold)
+    if (rules.min_age !== undefined) {
+        if (userInputs.age < rules.min_age) return false;
+    }
+
+    // Age check passed - disease is relevant for this age group
+    return true;
+}
+
+function getMatchingDiseaseContexts() {
+    const userInputs = {
+        age: parseInt(document.getElementById('age').value),
+        bmi: parseFloat(document.getElementById('bmiNumber').textContent),
+        dailySteps: parseInt(document.getElementById('dailySteps').value),
+        sugarIntake: document.getElementById('sugarIntake').value,
+        sleep: parseFloat(document.getElementById('sleep').value),
+        stressLevel: document.getElementById('stressLevel').value
+    };
+
+    const matched = loadedDiseaseContext
+        .filter(disease => evaluateRelevanceRules(disease.relevance_rules, userInputs))
+        .slice(0, 3); // Max 3 cards
+
+    return matched;
+}
+
+function formatInsight(template, disease) {
+    let insight = template
+        .replace('{prevalence}', disease.global_prevalence_percent)
+        .replace('{threshold}', disease.relevance_rules.bmi_threshold || '25');
+    return insight;
+}
+
+function renderGlobalHealthContext() {
+    const matchedDiseases = getMatchingDiseaseContexts();
+
+    if (matchedDiseases.length === 0) {
+        // Hide section if no matches
+        const section = document.getElementById('globalContextSection');
+        section.classList.remove('visible');
+        return;
+    }
+
+    const cardsContainer = document.getElementById('diseaseContextCards');
+    cardsContainer.innerHTML = '';
+
+    const diseaseIcons = {
+        'T2D': '🧬',
+        'CVD': '❤️',
+        'HTN': '💓',
+        'OB': '⚖️',
+        'SLEEP': '😴'
+    };
+
+    matchedDiseases.forEach(disease => {
+        const icon = diseaseIcons[disease.disease_id] || '🌍';
+        const insight = formatInsight(disease.insight_template, disease);
+
+        const card = document.createElement('div');
+        card.className = 'disease-card';
+        card.innerHTML = `
+            <div class="disease-card-header">
+                <div class="disease-card-icon">${icon}</div>
+                <div class="disease-card-title">
+                    <h3 class="disease-card-name">${escapeHtml(disease.disease_name)}</h3>
+                    <div class="disease-card-category">${escapeHtml(disease.category)}</div>
+                </div>
+            </div>
+            <div class="disease-prevalence">
+                <span class="disease-prevalence-label">Global Prevalence:</span>
+                <span class="disease-prevalence-value">${disease.global_prevalence_percent}%</span>
+            </div>
+            <div class="disease-insight">${escapeHtml(insight)}</div>
+            <div class="disease-risk-factors">
+                <div class="disease-risk-label">Key Risk Factors</div>
+                <div class="disease-risk-list">
+                    ${disease.key_risk_factors.map(factor => 
+                        `<span class="risk-badge">${escapeHtml(factor)}</span>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+        cardsContainer.appendChild(card);
+    });
+
+    // Show section
+    const section = document.getElementById('globalContextSection');
+    section.classList.add('visible');
+}
 document.addEventListener('DOMContentLoaded', () => {
     initializeDarkMode();
+    loadDiseaseContext();
     initializeSliderListeners();
     updateBMI();
     updateGlucoseStatus();
