@@ -266,6 +266,7 @@ function hideError() {
 // ============================================================================
 // API COMMUNICATION
 // ============================================================================
+const API_BASE_URL = "https://twindex.onrender.com";
 async function submitSimulation(event) {
     event.preventDefault();
     hideError();
@@ -295,7 +296,7 @@ async function submitSimulation(event) {
         };
 
         // Send to backend
-        const response = await fetch('http://127.0.0.1:8000/simulate', {
+        const response = await fetch(`${API_BASE_URL}/simulate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -563,7 +564,7 @@ Answer concisely and focus directly on what the user asked. Use simple language.
             prompt: followupPrompt
         };
 
-        const response = await fetch('http://127.0.0.1:8000/simulate', {
+        const response = await fetch(`${API_BASE_URL}/simulate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
