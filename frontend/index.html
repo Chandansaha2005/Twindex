@@ -84,13 +84,32 @@
         }
 
         /* ================================================================
-           BENTO GRID LAYOUT
+           BENTO GRID LAYOUT - 2-COLUMN PRIMARY/SECONDARY
            ================================================================ */
         .form-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 2rem;
             margin-bottom: 3rem;
+        }
+
+        .form-column-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .form-column-right {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .form-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
         }
 
         @media (max-width: 768px) {
@@ -200,18 +219,203 @@
             cursor: not-allowed;
         }
 
-        .form-group input::placeholder {
-            color: var(--text-muted);
+        /* ================================================================
+           SLIDERS & MODERN INPUTS
+           ================================================================ */
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
         }
 
-        .form-group small {
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            width: 24px;
+            height: 24px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            width: 24px;
+            height: 24px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: transparent;
+            border: none;
+        }
+
+        input[type="range"]::-moz-range-progress {
+            background: var(--primary);
+        }
+
+        /* Slider with live value display */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.1rem;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .slider-unit {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-left: 0.3rem;
+        }
+
+        .slider-hint {
             font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 0.3rem;
+            margin-top: 0.25rem;
         }
 
         /* ================================================================
-           SCENARIO & INFO BOX
+           SEGMENTED CONTROL (Gender)
+           ================================================================ */
+        .segmented-control {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-base);
+            padding: 0.4rem;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .segmented-button {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .segmented-button:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .segmented-button.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+        }
+
+        /* ================================================================
+           BMI BADGE & HEALTH INDICATORS
+           ================================================================ */
+        .bmi-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(37, 99, 235, 0.05) 100%);
+            border: 2px solid var(--primary);
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .bmi-badge-value {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .bmi-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .bmi-status {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .bmi-emoji {
+            font-size: 2.5rem;
+        }
+
+        /* Health status indicator */
+        .health-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            width: fit-content;
+        }
+
+        .health-status.normal {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .health-status.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .health-status.high {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* ================================================================
+           FORM GROUPS & STYLING
            ================================================================ */
         .scenario-desc {
             font-size: 0.95rem;
@@ -558,161 +762,245 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Form Section (Bento Grid) -->
+            <!-- Form Section (2-Column Bento) -->
             <form id="simulationForm" class="form-container">
-                <!-- Patient Profile Card -->
-                <div class="card">
-                    <h2 class="card-title">Patient Profile</h2>
-                    <div class="form-grid-2">
+                <!-- LEFT COLUMN: PRIMARY CARDS -->
+                <div class="form-column-left">
+                    
+                    <!-- Patient Snapshot Card (Large) -->
+                    <div class="card">
+                        <h2 class="card-title">👤 Patient Snapshot</h2>
+                        
+                        <!-- Name -->
                         <div class="form-group">
                             <label for="name">Full Name</label>
                             <input type="text" id="name" placeholder="John Doe" required>
                         </div>
-                        <div class="form-group">
-                            <label for="age">Age (years)</label>
-                            <input type="number" id="age" min="18" max="120" placeholder="35" required>
+
+                        <!-- Age Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Age</label>
+                                <div>
+                                    <span class="slider-value" id="ageValue">35</span>
+                                    <span class="slider-unit">years</span>
+                                </div>
+                            </div>
+                            <input type="range" id="age" min="18" max="80" value="35" required>
+                            <div class="slider-hint">Typical range: 18–80 years</div>
                         </div>
-                    </div>
-                    <div class="form-grid-2">
+
+                        <!-- Gender Segmented Control -->
                         <div class="form-group">
-                            <label for="gender">Gender</label>
-                            <select id="gender" required>
-                                <option value="">Select...</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
+                            <label>Gender</label>
+                            <div class="segmented-control">
+                                <button type="button" class="segmented-button active" data-gender="Male" onclick="selectGender(this)">♂ Male</button>
+                                <button type="button" class="segmented-button" data-gender="Female" onclick="selectGender(this)">♀ Female</button>
+                                <button type="button" class="segmented-button" data-gender="Other" onclick="selectGender(this)">⊕ Other</button>
+                            </div>
+                            <input type="hidden" id="gender" value="Male" required>
                         </div>
+
+                        <!-- Height Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Height</label>
+                                <div>
+                                    <span class="slider-value" id="heightValue">175</span>
+                                    <span class="slider-unit">cm</span>
+                                </div>
+                            </div>
+                            <input type="range" id="height" min="140" max="220" value="175" required oninput="updateBMI()">
+                            <div class="slider-hint">Typical range: 140–220 cm</div>
+                        </div>
+
+                        <!-- Weight Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Weight</label>
+                                <div>
+                                    <span class="slider-value" id="weightValue">75</span>
+                                    <span class="slider-unit">kg</span>
+                                </div>
+                            </div>
+                            <input type="range" id="weight" min="40" max="180" value="75" required oninput="updateBMI()">
+                            <div class="slider-hint">Typical range: 40–180 kg</div>
+                        </div>
+
+                        <!-- BMI Badge -->
+                        <div class="bmi-badge">
+                            <div class="bmi-badge-value">
+                                <div class="bmi-number" id="bmiNumber">24.5</div>
+                                <div class="bmi-status" id="bmiStatus">Normal Weight</div>
+                            </div>
+                            <div class="bmi-emoji" id="bmiEmoji">✅</div>
+                        </div>
+
+                        <!-- Family History -->
                         <div class="form-group">
                             <label for="familyHistory">Family History (Type 2 Diabetes)</label>
                             <input type="text" id="familyHistory" placeholder="Yes/No or details" required>
                         </div>
                     </div>
-                    <div class="divider"></div>
-                    <p class="card-subtitle">Physical Measurements</p>
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label for="height">Height (cm)</label>
-                            <input type="number" id="height" min="100" max="250" step="0.1" placeholder="175" required>
+
+                    <!-- Baseline Health Metrics Card (Medium) -->
+                    <div class="card">
+                        <h2 class="card-title">🩸 Baseline Health Metrics</h2>
+
+                        <!-- Fasting Glucose Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Fasting Glucose</label>
+                                <div>
+                                    <span class="slider-value" id="glucoseValue">100</span>
+                                    <span class="slider-unit">mg/dL</span>
+                                </div>
+                            </div>
+                            <input type="range" id="fastingGlucose" min="40" max="300" value="100" required oninput="updateGlucoseStatus()">
+                            <div class="slider-hint">Normal: < 100 mg/dL</div>
+                            <div class="health-status normal" id="glucoseStatus">✓ Normal</div>
                         </div>
-                        <div class="form-group">
-                            <label for="weight">Weight (kg)</label>
-                            <input type="number" id="weight" min="30" max="200" step="0.1" placeholder="75" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="bmi">BMI (auto)</label>
-                            <input type="number" id="bmi" placeholder="0.0" readonly>
+
+                        <!-- HbA1c Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">HbA1c</label>
+                                <div>
+                                    <span class="slider-value" id="hba1cValue">5.5</span>
+                                    <span class="slider-unit">%</span>
+                                </div>
+                            </div>
+                            <input type="range" id="hbA1c" min="3" max="14" value="5.5" step="0.1" required oninput="updateHbA1cStatus()">
+                            <div class="slider-hint">Normal: < 5.7%</div>
+                            <div class="health-status normal" id="hba1cStatus">✓ Normal</div>
                         </div>
                     </div>
+
                 </div>
 
-                <!-- Baseline Lab Data Card -->
-                <div class="card">
-                    <h2 class="card-title">Baseline Lab Data</h2>
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="fastingGlucose">Fasting Glucose (mg/dL)</label>
-                            <input type="number" id="fastingGlucose" min="40" max="500" step="0.1" placeholder="100" required>
-                            <small>Normal: &lt; 100</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="hbA1c">HbA1c (%)</label>
-                            <input type="number" id="hbA1c" min="3" max="15" step="0.1" placeholder="5.5" required>
-                            <small>Normal: &lt; 5.7</small>
-                        </div>
-                    </div>
-                </div>
+                <!-- RIGHT COLUMN: SECONDARY CARDS -->
+                <div class="form-column-right">
+                    
+                    <!-- Current Lifestyle Card -->
+                    <div class="card">
+                        <h2 class="card-title">🏃 Current Lifestyle</h2>
 
-                <!-- Current Lifestyle Card -->
-                <div class="card">
-                    <h2 class="card-title">Current Lifestyle</h2>
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="sleep">Sleep (hours/night)</label>
-                            <input type="number" id="sleep" min="2" max="12" step="0.5" placeholder="7" required>
+                        <!-- Sleep Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Sleep</label>
+                                <div>
+                                    <span class="slider-value" id="sleepValue">7</span>
+                                    <span class="slider-unit">hrs/night</span>
+                                </div>
+                            </div>
+                            <input type="range" id="sleep" min="2" max="12" value="7" step="0.5" required>
+                            <div class="slider-hint">Recommended: 7–9 hours</div>
                         </div>
-                        <div class="form-group">
-                            <label for="dailySteps">Daily Steps</label>
-                            <input type="number" id="dailySteps" min="0" max="50000" placeholder="5000" required>
+
+                        <!-- Daily Steps Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Daily Steps</label>
+                                <div>
+                                    <span class="slider-value" id="stepsValue">5000</span>
+                                    <span class="slider-unit">steps</span>
+                                </div>
+                            </div>
+                            <input type="range" id="dailySteps" min="0" max="20000" value="5000" step="500" required>
+                            <div class="slider-hint">Target: 10,000+ steps</div>
                         </div>
-                    </div>
-                    <div class="form-grid-2">
+
+                        <!-- Sugar Intake Dropdown -->
                         <div class="form-group">
                             <label for="sugarIntake">Sugar Intake</label>
                             <select id="sugarIntake" required>
                                 <option value="">Select...</option>
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
+                                <option value="Low">🟢 Low</option>
+                                <option value="Medium" selected>🟡 Medium</option>
+                                <option value="High">🔴 High</option>
                             </select>
                         </div>
+
+                        <!-- Stress Level Dropdown -->
                         <div class="form-group">
                             <label for="stressLevel">Stress Level</label>
                             <select id="stressLevel" required>
                                 <option value="">Select...</option>
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
+                                <option value="Low">🟢 Low</option>
+                                <option value="Medium" selected>🟡 Medium</option>
+                                <option value="High">🔴 High</option>
                             </select>
                         </div>
                     </div>
-                </div>
 
-                <!-- Scenario A Card -->
-                <div class="card">
-                    <h2 class="card-title">Scenario A</h2>
-                    <p class="scenario-desc">Current lifestyle continues unchanged</p>
-                    <div class="info-box">
-                        ℹ️ This baseline scenario maintains your current lifestyle patterns.
-                    </div>
-                </div>
+                    <!-- Future Scenario Card -->
+                    <div class="card">
+                        <h2 class="card-title">🎯 Future Scenario (Target)</h2>
 
-                <!-- Scenario B Card -->
-                <div class="card">
-                    <h2 class="card-title">Scenario B</h2>
-                    <p class="scenario-desc">Improved Lifestyle</p>
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="targetSleep">Target Sleep (hours/night)</label>
-                            <input type="number" id="targetSleep" min="2" max="12" step="0.5" placeholder="8" required>
+                        <!-- Target Sleep Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Target Sleep</label>
+                                <div>
+                                    <span class="slider-value" id="targetSleepValue">8</span>
+                                    <span class="slider-unit">hrs/night</span>
+                                </div>
+                            </div>
+                            <input type="range" id="targetSleep" min="2" max="12" value="8" step="0.5" required>
                         </div>
-                        <div class="form-group">
-                            <label for="targetSteps">Target Daily Steps</label>
-                            <input type="number" id="targetSteps" min="0" max="50000" placeholder="10000" required>
+
+                        <!-- Target Daily Steps Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Target Steps</label>
+                                <div>
+                                    <span class="slider-value" id="targetStepsValue">10000</span>
+                                    <span class="slider-unit">steps</span>
+                                </div>
+                            </div>
+                            <input type="range" id="targetSteps" min="0" max="20000" value="10000" step="500" required>
                         </div>
-                    </div>
-                    <div class="form-grid-2">
+
+                        <!-- Target Sugar Intake Dropdown -->
                         <div class="form-group">
                             <label for="targetSugarIntake">Target Sugar Intake</label>
                             <select id="targetSugarIntake" required>
                                 <option value="">Select...</option>
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
+                                <option value="Low" selected>🟢 Low</option>
+                                <option value="Medium">🟡 Medium</option>
+                                <option value="High">🔴 High</option>
                             </select>
                         </div>
                     </div>
-                </div>
 
-                <!-- Simulation Timeframe Card -->
-                <div class="card">
-                    <h2 class="card-title">Simulation Timeframe</h2>
-                    <div class="form-group">
-                        <label for="duration">Duration (months)</label>
-                        <input type="number" id="duration" min="1" max="120" step="1" placeholder="9" value="9" required>
+                    <!-- Simulation Controls Card -->
+                    <div class="card">
+                        <h2 class="card-title">⏱️ Simulation Timeframe</h2>
+
+                        <!-- Duration Slider -->
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <label class="slider-label">Duration</label>
+                                <div>
+                                    <span class="slider-value" id="durationValue">9</span>
+                                    <span class="slider-unit">months</span>
+                                </div>
+                            </div>
+                            <input type="range" id="duration" min="1" max="36" value="9" step="1" required>
+                            <div class="slider-hint">Simulate: 1–36 months ahead</div>
+                        </div>
+
+                        <!-- Error Message -->
+                        <div class="error-message hidden" id="errorMessage"></div>
+
+                        <!-- Submit Button (Full Width) -->
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding: 1rem; font-size: 1rem;">
+                            <span>Simulate Health Trajectory</span>
+                            <span class="btn-spinner" id="btnSpinner" style="display: none;">⟳</span>
+                        </button>
                     </div>
-                </div>
 
-                <!-- Error Message -->
-                <div class="error-message hidden" id="errorMessage"></div>
-
-                <!-- Submit Button -->
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">
-                        <span>Run Simulation</span>
-                        <span class="btn-spinner" id="btnSpinner" style="display: none;">⟳</span>
-                    </button>
-                    <button type="reset" class="btn btn-secondary">Clear</button>
                 </div>
             </form>
 
@@ -774,7 +1062,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Powered by Gemini AI • Educational tool • Not medical advice</p>
+            <p>Built with Gemini AI • Built By TANTRIKS</p>
         </footer>
     </div>
 

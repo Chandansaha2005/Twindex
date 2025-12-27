@@ -4,6 +4,152 @@
  */
 
 // ============================================================================
+// SLIDER VALUE SYNCHRONIZATION
+// ============================================================================
+function initializeSliderListeners() {
+    // Age slider
+    document.getElementById('age').addEventListener('input', (e) => {
+        document.getElementById('ageValue').textContent = Math.round(e.target.value);
+    });
+
+    // Height slider
+    document.getElementById('height').addEventListener('input', (e) => {
+        document.getElementById('heightValue').textContent = Math.round(e.target.value);
+        updateBMI();
+    });
+
+    // Weight slider
+    document.getElementById('weight').addEventListener('input', (e) => {
+        document.getElementById('weightValue').textContent = Math.round(e.target.value);
+        updateBMI();
+    });
+
+    // Sleep slider
+    document.getElementById('sleep').addEventListener('input', (e) => {
+        document.getElementById('sleepValue').textContent = parseFloat(e.target.value).toFixed(1);
+    });
+
+    // Daily Steps slider
+    document.getElementById('dailySteps').addEventListener('input', (e) => {
+        document.getElementById('stepsValue').textContent = Math.round(e.target.value).toLocaleString();
+    });
+
+    // Target Sleep slider
+    document.getElementById('targetSleep').addEventListener('input', (e) => {
+        document.getElementById('targetSleepValue').textContent = parseFloat(e.target.value).toFixed(1);
+    });
+
+    // Target Steps slider
+    document.getElementById('targetSteps').addEventListener('input', (e) => {
+        document.getElementById('targetStepsValue').textContent = Math.round(e.target.value).toLocaleString();
+    });
+
+    // Duration slider
+    document.getElementById('duration').addEventListener('input', (e) => {
+        document.getElementById('durationValue').textContent = e.target.value;
+    });
+
+    // Fasting Glucose slider
+    document.getElementById('fastingGlucose').addEventListener('input', (e) => {
+        document.getElementById('glucoseValue').textContent = Math.round(e.target.value);
+        updateGlucoseStatus();
+    });
+
+    // HbA1c slider
+    document.getElementById('hbA1c').addEventListener('input', (e) => {
+        document.getElementById('hba1cValue').textContent = parseFloat(e.target.value).toFixed(1);
+        updateHbA1cStatus();
+    });
+}
+
+// ============================================================================
+// BMI CALCULATION & STATUS
+// ============================================================================
+function updateBMI() {
+    const height = parseFloat(document.getElementById('height').value) / 100;
+    const weight = parseFloat(document.getElementById('weight').value);
+
+    if (height > 0 && weight > 0) {
+        const bmi = (weight / (height * height)).toFixed(1);
+        document.getElementById('bmiNumber').textContent = bmi;
+
+        // Determine BMI status
+        let status, emoji;
+        if (bmi < 18.5) {
+            status = 'Underweight';
+            emoji = '⚠️';
+        } else if (bmi < 25) {
+            status = 'Normal Weight';
+            emoji = '✅';
+        } else if (bmi < 30) {
+            status = 'Overweight';
+            emoji = '⚠️';
+        } else {
+            status = 'Obese';
+            emoji = '🔴';
+        }
+
+        document.getElementById('bmiStatus').textContent = status;
+        document.getElementById('bmiEmoji').textContent = emoji;
+    }
+}
+
+// ============================================================================
+// HEALTH STATUS UPDATES
+// ============================================================================
+function updateGlucoseStatus() {
+    const glucose = parseFloat(document.getElementById('fastingGlucose').value);
+    const statusEl = document.getElementById('glucoseStatus');
+
+    let status, className;
+    if (glucose < 100) {
+        status = '✓ Normal';
+        className = 'normal';
+    } else if (glucose < 126) {
+        status = '⚠ At Risk (Prediabetes)';
+        className = 'warning';
+    } else {
+        status = '🔴 High (Diabetes)';
+        className = 'high';
+    }
+
+    statusEl.textContent = status;
+    statusEl.className = 'health-status ' + className;
+}
+
+function updateHbA1cStatus() {
+    const hba1c = parseFloat(document.getElementById('hbA1c').value);
+    const statusEl = document.getElementById('hba1cStatus');
+
+    let status, className;
+    if (hba1c < 5.7) {
+        status = '✓ Normal';
+        className = 'normal';
+    } else if (hba1c < 6.5) {
+        status = '⚠ At Risk (Prediabetes)';
+        className = 'warning';
+    } else {
+        status = '🔴 High (Diabetes)';
+        className = 'high';
+    }
+
+    statusEl.textContent = status;
+    statusEl.className = 'health-status ' + className;
+}
+
+// ============================================================================
+// GENDER SELECTION
+// ============================================================================
+function selectGender(button) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.segmented-button').forEach(btn => btn.classList.remove('active'));
+    // Add active class to clicked button
+    button.classList.add('active');
+    // Update hidden input
+    document.getElementById('gender').value = button.dataset.gender;
+}
+
+// ============================================================================
 // DOM ELEMENTS
 // ============================================================================
 const form = document.getElementById('simulationForm');
@@ -13,38 +159,21 @@ const loadingState = document.getElementById('loadingState');
 const resultsContainer = document.getElementById('resultsContainer');
 const btnSpinner = document.getElementById('btnSpinner');
 
-// Input fields
-const heightInput = document.getElementById('height');
-const weightInput = document.getElementById('weight');
-const bmiInput = document.getElementById('bmi');
-
-// ============================================================================
-// BMI AUTO-CALCULATION
-// ============================================================================
-function calculateBMI() {
-    const height = parseFloat(heightInput.value);
-    const weight = parseFloat(weightInput.value);
-
-    if (height > 0 && weight > 0) {
-        const heightInMeters = height / 100;
-        const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
-        bmiInput.value = bmi;
-    }
-}
-
-heightInput.addEventListener('change', calculateBMI);
-weightInput.addEventListener('change', calculateBMI);
-
 // ============================================================================
 // PROMPT CONSTRUCTION
 // ============================================================================
 function constructPrompt() {
+    // Calculate BMI for prompt
+    const height = parseFloat(document.getElementById('height').value) / 100;
+    const weight = parseFloat(document.getElementById('weight').value);
+    const bmi = (weight / (height * height)).toFixed(1);
+
     // Collect form data
     const data = {
         name: document.getElementById('name').value,
         age: document.getElementById('age').value,
         gender: document.getElementById('gender').value,
-        bmi: document.getElementById('bmi').value,
+        bmi: bmi,
         familyHistory: document.getElementById('familyHistory').value,
         fastingGlucose: document.getElementById('fastingGlucose').value,
         hbA1c: document.getElementById('hbA1c').value,
@@ -339,7 +468,11 @@ function resetSimulation() {
 }
 
 form.addEventListener('reset', () => {
-    bmiInput.value = '';
+    // Reinitialize sliders to default values
+    updateBMI();
+    updateGlucoseStatus();
+    updateHbA1cStatus();
+    initializeSliderListeners();
     hideError();
 });
 
@@ -351,5 +484,11 @@ form.addEventListener('submit', submitSimulation);
 // ============================================================================
 // INITIALIZE
 // ============================================================================
-console.log('Twindex Frontend Ready');
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSliderListeners();
+    updateBMI();
+    updateGlucoseStatus();
+    updateHbA1cStatus();
+    console.log('Twindex Frontend Ready');
+});
 
