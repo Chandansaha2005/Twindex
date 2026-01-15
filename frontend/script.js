@@ -1,11 +1,3 @@
-/**
- * Twindex Frontend - Health Trajectory Simulator
- * Handles form input, prompt construction, and API communication
- */
-
-// ============================================================================
-// SLIDER VALUE SYNCHRONIZATION
-// ============================================================================
 function initializeSliderListeners() {
     // Age slider
     document.getElementById('age').addEventListener('input', (e) => {
@@ -489,34 +481,43 @@ let loadedDiseaseContext = [];
 function initializeFollowupChat() {
     const chatInput = document.getElementById('chatInput');
     const chatSendBtn = document.getElementById('chatSendBtn');
+    const imageUploadBtn = document.getElementById('imageUploadBtn');
 
     chatInput.disabled = false;
     chatSendBtn.disabled = false;
+    imageUploadBtn.disabled = false;
     chatInput.focus();
 }
 
-function addChatMessage(text, isUser) {
+function addChatMessage(text, isUser, imageData) {
     const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'}`;
     
-    if (isUser) {
-        messageDiv.innerHTML = `<div class="chat-message-content">${escapeHtml(text)}</div>`;
-    } else {
-        // Parse markdown for AI responses
-        messageDiv.innerHTML = `<div class="chat-message-content chat-ai-content">${marked.parse(text)}</div>`;
+    let messageHTML = '';
+    if (imageData) {
+        messageHTML = `<img src="${imageData}" alt="Prescription" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-bottom: 0.5rem;">`;
     }
     
+    if (isUser) {
+        messageHTML += `<div class="chat-message-content">${escapeHtml(text)}</div>`;
+    } else {
+        // Parse markdown for AI responses
+        messageHTML += `<div class="chat-message-content chat-ai-content">${marked.parse(text)}</div>`;
+    }
+    
+    messageDiv.innerHTML = messageHTML;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function addThinkingIndicator() {
+function addThinkingIndicator(customText) {
     const chatMessages = document.getElementById('chatMessages');
     const thinkingDiv = document.createElement('div');
     thinkingDiv.className = 'chat-message ai';
     thinkingDiv.id = 'thinkingIndicator';
-    thinkingDiv.innerHTML = `<div class="chat-message-content"><span class="chat-thinking">Thinking...</span></div>`;
+    const text = customText || 'Thinking...';
+    thinkingDiv.innerHTML = `<div class="chat-message-content"><span class="chat-thinking">${text}</span></div>`;
     chatMessages.appendChild(thinkingDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -533,24 +534,36 @@ async function sendFollowupQuestion() {
     const chatSendBtn = document.getElementById('chatSendBtn');
     const question = chatInput.value.trim();
 
-    if (!question) {
+    if (!question && !uploadedImageFile) {
         return;
     }
 
     // Disable input while processing
     chatInput.disabled = true;
     chatSendBtn.disabled = true;
+    document.getElementById('imageUploadBtn').disabled = true;
 
-    // Add user message
-    addChatMessage(question, true);
+    // Add user message with image preview if present
+    if (uploadedImageFile) {
+        addChatMessage(question || '(Prescription Image)', true, uploadedImageBase64);
+    } else {
+        addChatMessage(question, true);
+    }
     chatInput.value = '';
 
-    // Show thinking indicator
-    addThinkingIndicator();
+    // Show thinking indicator with prescription status
+    if (uploadedImageFile) {
+        addThinkingIndicator('Analyzing prescription...');
+    } else {
+        addThinkingIndicator();
+    }
 
     try {
-        // Construct follow-up prompt with context
-        const followupPrompt = `You are continuing a discussion based strictly on the following generated health simulation report. Do not repeat the report. Answer only the user's question with clear cause-effect reasoning.
+        let response;
+
+        // If NO image uploaded - use JSON (original method)
+        if (!uploadedImageFile) {
+            const followupPrompt = `You are continuing a discussion based strictly on the following generated health simulation report. Do not repeat the report. Answer only the user's question with clear cause-effect reasoning.
 
 PREVIOUS_REPORT:
 ${storedReportContent}
@@ -560,17 +573,49 @@ ${question}
 
 Answer concisely and focus directly on what the user asked. Use simple language.`;
 
-        const payload = {
-            prompt: followupPrompt
-        };
+            const payload = {
+                prompt: followupPrompt
+            };
 
-        const response = await fetch(`${API_BASE_URL}/simulate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
+            response = await fetch(`${API_BASE_URL}/simulate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+        } else {
+            // If image is uploaded - use FormData (multipart)
+            const followupPrompt = `You are a healthcare explanation assistant.
+You do not provide medical diagnosis or treatment.
+You only explain existing prescriptions in an educational manner.
+
+HEALTH_REPORT_CONTEXT:
+${storedReportContent}
+
+USER_QUESTION:
+${question}
+
+NOTE: An image containing a prescription has been uploaded. 
+- Extract and explain what medicines are visible
+- Explain their purpose in simple language
+- Connect to the health report context
+- Provide lifestyle and educational guidance only
+- Do NOT suggest dosage changes or new medicines
+- Do NOT diagnose or prescribe
+
+Keep explanation concise and educational.`;
+
+            const formData = new FormData();
+            formData.append('prompt', followupPrompt);
+            formData.append('image', uploadedImageFile);
+
+            response = await fetch(`${API_BASE_URL}/simulate`, {
+                method: 'POST',
+                body: formData
+                // Don't set Content-Type header - browser will set it with boundary
+            });
+        }
 
         if (!response.ok) {
             const errorData = await response.json();
@@ -587,6 +632,9 @@ Answer concisely and focus directly on what the user asked. Use simple language.
         removeThinkingIndicator();
         addChatMessage(result.result, false);
 
+        // Clear uploaded image after sending
+        removeUploadedImage();
+
     } catch (error) {
         removeThinkingIndicator();
         addChatMessage(`Error: ${error.message}`, false);
@@ -594,6 +642,7 @@ Answer concisely and focus directly on what the user asked. Use simple language.
         // Re-enable input
         chatInput.disabled = false;
         chatSendBtn.disabled = false;
+        document.getElementById('imageUploadBtn').disabled = false;
         chatInput.focus();
     }
 }
@@ -701,6 +750,54 @@ function renderGlobalHealthContext() {
     const section = document.getElementById('globalContextSection');
     section.classList.add('visible');
 }
+
+// ============================================================================
+// PRESCRIPTION IMAGE UPLOAD
+// ============================================================================
+let uploadedImageFile = null;
+let uploadedImageBase64 = null;
+
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match('image/(jpeg|png)')) {
+        alert('Please upload a JPG or PNG image');
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB');
+        return;
+    }
+
+    uploadedImageFile = file;
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        uploadedImageBase64 = event.target.result;
+        showImagePreview();
+    };
+    reader.readAsDataURL(file);
+}
+
+function showImagePreview() {
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImg = document.getElementById('imagePreview');
+    previewImg.src = uploadedImageBase64;
+    previewContainer.style.display = 'block';
+}
+
+function removeUploadedImage() {
+    uploadedImageFile = null;
+    uploadedImageBase64 = null;
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imagePreviewContainer').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeDarkMode();
     loadDiseaseContext();
@@ -708,6 +805,12 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBMI();
     updateGlucoseStatus();
     updateHbA1cStatus();
+    
+    // Initialize image input listener
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImageUpload);
+    }
     
     // Add enter key listener for chat input
     const chatInput = document.getElementById('chatInput');

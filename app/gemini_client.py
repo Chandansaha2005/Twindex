@@ -18,10 +18,6 @@ def run_twindex(user_input: str) -> str:
             "Risk trajectories and explanations would be generated here "
             "once Gemini credits are enabled."
         )
-
-    # -------------------------------
-    # REAL GEMINI MODE
-    # -------------------------------
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not found in environment variables")
@@ -80,3 +76,102 @@ def run_twindex(user_input: str) -> str:
     except Exception as e:
         logger.error("Unexpected error calling Gemini", exc_info=True)
         raise ValueError("AI generation failed due to server error.")
+
+def run_prescription_analysis(prompt: str, image_base64: str, content_type: str) -> str:
+    """
+    Analyze a prescription image using Gemini AI.
+    
+    Args:
+        prompt: User question and health context
+        image_base64: Base64 encoded image data
+        content_type: MIME type of the image (e.g., 'image/jpeg', 'image/png')
+        
+    Returns:
+        AI-generated explanation of the prescription
+    """
+    # -------------------------------
+    # DEMO / FALLBACK MODE
+    # -------------------------------
+    if os.getenv("DISABLE_GEMINI") == "1":
+        return (
+            "[DEMO MODE - Prescription Analysis]\n"
+            "Prescription image received and would be analyzed here.\n\n"
+            f"User query: {prompt[:100]}...\n\n"
+            "Analysis would show medicine names, purposes, and educational guidance "
+            "once Gemini credits are enabled."
+        )
+
+    # -------------------------------
+    # REAL GEMINI MODE
+    # -------------------------------
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY not found in environment variables")
+
+    try:
+        client = genai.Client(api_key=api_key)
+
+        # Determine MIME type for Gemini API
+        mime_type = content_type if content_type in ['image/jpeg', 'image/png'] else 'image/jpeg'
+
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_text(text=prompt),
+                        types.Part(
+                            inline_data=types.Blob(
+                                mime_type=mime_type,
+                                data=image_base64
+                            )
+                        )
+                    ]
+                )
+            ],
+            config=types.GenerateContentConfig(
+                temperature=0.3,
+                max_output_tokens=700,
+                system_instruction=(
+                    "You are a healthcare explanation assistant.\n"
+                    "You do not provide medical diagnosis or treatment.\n"
+                    "You only explain existing prescriptions in an educational manner.\n\n"
+                    "Rules:\n"
+                    "- Extract and list visible medicines\n"
+                    "- Explain each medicine's purpose in simple language\n"
+                    "- Connect explanations to the patient's health context\n"
+                    "- Provide lifestyle and educational guidance only\n"
+                    "- Do NOT suggest dosage changes\n"
+                    "- Do NOT recommend new medicines\n"
+                    "- Do NOT provide diagnosis\n"
+                    "- Keep explanations concise and clear\n"
+                    "- Use bullet points for readability"
+                ),
+            ),
+        )
+
+        if not response or not response.text:
+            return "Could not analyze the prescription image."
+
+        return response.text
+
+    except errors.ClientError as e:
+        error_str = str(e)
+
+        if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+            logger.warning(f"Gemini quota exceeded: {e}")
+            raise ValueError(
+                "Gemini API quota exceeded. Please enable credits."
+            )
+
+        if "401" in error_str or "INVALID_ARGUMENT" in error_str:
+            logger.error(f"Invalid API key or request: {e}")
+            raise ValueError("Gemini authentication failed.")
+
+        logger.error("Unhandled Gemini API error", exc_info=True)
+        raise ValueError("Gemini API error occurred.")
+
+    except Exception as e:
+        logger.error(f"Unexpected error in prescription analysis: {e}", exc_info=True)
+        raise ValueError("Prescription analysis failed due to server error.")
